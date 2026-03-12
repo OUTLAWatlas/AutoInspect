@@ -46,6 +46,24 @@ services:
       WORKER_CONCURRENCY: 2
     shm_size: "2gb"
 
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgresql://autoinspect:autoinspect@postgres:5432/autoinspect
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 4000
+
 volumes:
   pgdata:
   redisdata:
