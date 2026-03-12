@@ -1,13 +1,10 @@
 import { Worker, Job } from "bullmq";
-import { runMonitor } from "./processor";
-import { PrismaClient } from "../../shared/generated/prisma";
+import { processJob } from "./processor";
 
 const connection = {
   host: process.env.REDIS_HOST ?? "redis",
   port: Number(process.env.REDIS_PORT ?? 6379),
 };
-
-const prisma = new PrismaClient();
 
 interface MonitorJobData {
   monitorId: string;
@@ -22,19 +19,10 @@ const worker = new Worker<MonitorJobData>(
 
     console.log(`[job:${job.id}] Running monitor for ${url}`);
 
-    const result = await runMonitor(url, selector);
-
-    await prisma.testResult.create({
-      data: {
-        monitorId,
-        status: result.success ? "pass" : "fail",
-        loadTime: result.loadTime,
-        error: result.error,
-      },
-    });
+    const result = await processJob(monitorId, url, selector);
 
     console.log(
-      `[job:${job.id}] Finished — ${result.success ? "pass" : "fail"} (${result.loadTime}ms)`
+      `[job:${job.id}] Finished — ${result.status} (${result.loadTime}ms)`
     );
 
     return result;

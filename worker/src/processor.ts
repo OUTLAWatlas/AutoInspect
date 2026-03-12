@@ -1,16 +1,16 @@
-import { Builder, By, until } from "selenium-webdriver";
+import { Builder, By, until, WebDriver } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
+import { PrismaClient } from "../../shared/generated/prisma";
+
+const prisma = new PrismaClient();
 
 export interface MonitorResult {
-  success: boolean;
+  status: "PASS" | "FAIL";
   loadTime: number;
   error?: string;
 }
 
-export async function runMonitor(
-  url: string,
-  selector?: string | null
-): Promise<MonitorResult> {
+function getDriver(): Promise<WebDriver> {
   const options = new chrome.Options();
   options.addArguments(
     "--headless=new",
@@ -20,10 +20,23 @@ export async function runMonitor(
     "--window-size=1920,1080"
   );
 
-  const driver = await new Builder()
+  return new Builder()
     .forBrowser("chrome")
     .setChromeOptions(options)
     .build();
+}
+
+export async function processJob(
+  monitorId: string,
+  url: string,
+  selector?: string | null
+): Promise<MonitorResult> {
+  const driver = await getDriver();
+  await driver.manage().setTimeouts({ implicit: 5000 });
+
+  let status: "PASS" | "FAIL" = "FAIL";
+  let loadTime = -1;
+  let errorMessage: string | undefined;
 
   try {
     const start = performance.now();
@@ -34,13 +47,27 @@ export async function runMonitor(
       await driver.wait(until.elementLocated(By.css(selector)), 15_000);
     }
 
-    const loadTime = Math.round(performance.now() - start);
-
-    return { success: true, loadTime };
+    loadTime = Math.round(performance.now() - start);
+    status = "PASS";
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { success: false, loadTime: -1, error: message };
+    errorMessage = err instanceof Error ? err.message : String(err);
   } finally {
     await driver.quit();
   }
+
+  await prisma.testResult.create({
+    data: {
+      monitorId,
+      status,
+      loadTime,
+      error: errorMessage,
+    },
+  });
+
+  await prisma.monitor.update({
+    where: { id: monitorId },
+    data: { lastRun: new Date() },
+  });
+
+  return { status, loadTime, error: errorMessage };
 }
