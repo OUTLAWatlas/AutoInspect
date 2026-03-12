@@ -1,0 +1,29 @@
+node_modules/
+dist/
+*.js.map
+
+# Prisma
+shared/generated/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+.docker/

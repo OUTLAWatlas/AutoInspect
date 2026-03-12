@@ -1,0 +1,21 @@
+{
+  "name": "autoinspect-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.0",
+    "bullmq": "^5.25.0",
+    "selenium-webdriver": "^4.27.0"
+  },
+  "devDependencies": {
+    "@types/selenium-webdriver": "^4.1.28",
+    "prisma": "^6.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0"
+  }
+}
