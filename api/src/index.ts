@@ -45,6 +45,12 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`[api] Listening on port ${PORT}`);
-});
+export function startServer(): void {
+  app.listen(PORT, () => {
+    console.log(`[api] Listening on port ${PORT}`);
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
